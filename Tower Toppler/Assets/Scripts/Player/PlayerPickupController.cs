@@ -1,13 +1,16 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 
-public class PlayerPickupController : MonoBehaviour
+#pragma warning disable 0618
+public class PlayerPickupController : NetworkBehaviour
 {
 
     #region Members
 
     #pragma warning disable 0649
+    [SerializeField] private float m_RotationSpeed;
     [SerializeField] private GameObject m_PlayerHand;
     #pragma warning disable 0649
 
@@ -24,6 +27,11 @@ public class PlayerPickupController : MonoBehaviour
 
     void Update()
     {
+        if (!isLocalPlayer)
+        {
+            return;
+        }
+
         if (Input.GetMouseButtonDown(0))
         {
             RaycastHit hit;
@@ -36,6 +44,34 @@ public class PlayerPickupController : MonoBehaviour
         {
             m_HeldObject.GetComponent<IInteractable>().OnInteract();
             Drop();
+        }
+    }
+
+    void FixedUpdate()
+    {
+        if (isLocalPlayer)
+        {
+            return;
+        }
+
+        if (m_HeldObject)
+        {
+            if (Input.GetKey(KeyCode.E))
+            {
+                m_HeldObject.transform.Rotate(new Vector3(0, 1, 0) * m_RotationSpeed * Time.deltaTime, Space.World);
+            }
+            if (Input.GetKey(KeyCode.Q))
+            {
+                m_HeldObject.transform.Rotate(new Vector3(0, -1, 0) * m_RotationSpeed * Time.deltaTime, Space.World);
+            }
+            if (Input.GetAxis("Mouse ScrollWheel") > 0f)
+            {
+                m_HeldObject.transform.Rotate(new Vector3(10, 0, 0) * m_RotationSpeed * Time.deltaTime, Space.World);
+            }
+            if (Input.GetAxis("Mouse ScrollWheel") < 0f)
+            {
+                m_HeldObject.transform.Rotate(new Vector3(-10, 0, 0) * m_RotationSpeed * Time.deltaTime, Space.World);
+            }
         }
     }
 

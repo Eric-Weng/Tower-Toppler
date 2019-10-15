@@ -1,16 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 
-public class PlayerMovementController : MonoBehaviour
+#pragma warning disable 0618
+public class PlayerMovementController : NetworkBehaviour
 {
 
     #region Fields
-
-    #pragma warning disable 0649 
-    [SerializeField] private float speed;
-    [SerializeField] GameObject playerBody;
-    #pragma warning restore 0649
+    
+    public float speed;
 
     private Rigidbody m_RigidBody;
 
@@ -21,11 +20,16 @@ public class PlayerMovementController : MonoBehaviour
 
     private void Start()
     {
-        m_RigidBody = playerBody.GetComponent<Rigidbody>();
+        m_RigidBody = gameObject.GetComponent<Rigidbody>();
     }
 
     private void FixedUpdate()
     {
+        if (!isLocalPlayer)
+        {
+            return;
+        }
+
         Move();
     }
 
@@ -47,7 +51,7 @@ public class PlayerMovementController : MonoBehaviour
 
         float modifier = Input.GetKey(KeyCode.LeftControl) ? 0.5f : 1f;
         
-        Vector3 force = playerBody.transform.TransformDirection(new Vector3(xAxis, yAxis, zAxis) * speed * modifier);
+        Vector3 force = transform.TransformDirection(new Vector3(xAxis, yAxis, zAxis) * speed * modifier);
         m_RigidBody.AddForce(force);
     }
 

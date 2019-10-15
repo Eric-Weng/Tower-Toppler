@@ -10,10 +10,10 @@ public class CountdownController : MonoBehaviour
     [SerializeField] private float timerTime;
 
     private float timer;
-    private bool canCount;
-    private bool doOnce;
+    private bool canCount = true;
+    private bool doOnce = false;
 
-    public bool timerDone;
+    public bool timerDone = false;
     #pragma warning restore 0649
 
     #endregion

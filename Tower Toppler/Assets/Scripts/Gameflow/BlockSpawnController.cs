@@ -22,7 +22,16 @@ public class BlockSpawnController : MonoBehaviour
 
     public GameObject SpawnRandomAtPosition(Transform pos)
     {
-        return Instantiate(m_Blocks[UnityEngine.Random.Range(0, m_Blocks.Count)], pos);
+        if (m_Blocks.Count == 0)
+        {
+            return null;
+        }
+
+        GameObject newBlock = Instantiate(m_Blocks[UnityEngine.Random.Range(0, m_Blocks.Count)], pos);
+        newBlock.transform.SetParent(null);
+
+        return newBlock;
+
     }
 
     #endregion

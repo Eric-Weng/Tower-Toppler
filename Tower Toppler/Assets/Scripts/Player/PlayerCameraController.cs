@@ -1,19 +1,18 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 
-public class PlayerCameraController : MonoBehaviour
+#pragma warning disable 0618
+public class PlayerCameraController : NetworkBehaviour
 {
 
     #region Fields
-
-    #pragma warning disable 0649
-    [SerializeField] private float lookSensitivity;
-    [SerializeField] private float smoothing;
-    [SerializeField] private GameObject playerBody;
-    [SerializeField] private Camera playerCamera;
-    #pragma warning restore 0649
-
+    
+    public float lookSensitivity;
+    public float smoothing;
+    public GameObject playerBody;
+    public Camera playerCamera;
 
     private Vector2 smoothedVelocity;
     private Vector2 currentLookingPos;
@@ -25,12 +24,23 @@ public class PlayerCameraController : MonoBehaviour
 
     private void Start()
     {
+        if (!isLocalPlayer)
+        {
+            playerCamera.enabled = false;
+            return;
+        }
+
         Cursor.lockState = CursorLockMode.Locked; //Lock cursor in the middle of screen
         Cursor.visible = false; //Make cursor invisible
     }
 
     private void Update()
     {
+        if (!isLocalPlayer)
+        {
+            return;
+        }
+
         RotateCamera(); //Rotate camera every frame
     }
 
