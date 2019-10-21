@@ -12,7 +12,7 @@ public class PlayerCameraController : NetworkBehaviour
     public float lookSensitivity;
     public float smoothing;
     public GameObject playerBody;
-    public Camera playerCamera;
+    public GameObject playerCamera;
 
     private Vector2 smoothedVelocity;
     private Vector2 currentLookingPos;
@@ -26,7 +26,8 @@ public class PlayerCameraController : NetworkBehaviour
     {
         if (!isLocalPlayer)
         {
-            playerCamera.enabled = false;
+            playerCamera.GetComponent<Camera>().enabled = false;
+            playerCamera.GetComponent<AudioListener>().enabled = false;
             return;
         }
 

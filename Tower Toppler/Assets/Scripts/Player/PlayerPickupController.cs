@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -8,13 +9,13 @@ public class PlayerPickupController : NetworkBehaviour
 {
 
     #region Members
+    
+    public Transform PlayerHand;
+    public Camera PlayerCamera;
+    public float RotationSpeed;
 
-    #pragma warning disable 0649
-    [SerializeField] private float m_RotationSpeed;
-    [SerializeField] private GameObject m_PlayerHand;
-    #pragma warning disable 0649
-
-    private Transform m_HeldObject;
+    private int m_InteractionMask = 0;
+    private NetworkIdentity m_HeldObject = null;
 
     #endregion
 
@@ -22,56 +23,32 @@ public class PlayerPickupController : NetworkBehaviour
 
     void Start()
     {
-        m_HeldObject = null;
-    }
-
-    void Update()
-    {
         if (!isLocalPlayer)
         {
             return;
         }
 
-        if (Input.GetMouseButtonDown(0))
-        {
-            RaycastHit hit;
-            if (Physics.Raycast(m_PlayerHand.transform.position, m_PlayerHand.transform.TransformDirection(Vector3.forward), out hit))
-            {
-                OnRayHit(hit);
-            }
-        }
-        else if (Input.GetMouseButtonUp(0) && m_HeldObject != null)
-        {
-            m_HeldObject.GetComponent<IInteractable>().OnInteract();
-            Drop();
-        }
+        m_InteractionMask = LayerMask.GetMask("Interactable");
     }
 
-    void FixedUpdate()
+    void Update()
     {
-        if (isLocalPlayer)
+        // Ensure local player only modifies local object
+        if (!isLocalPlayer)
         {
             return;
         }
 
-        if (m_HeldObject)
+        // If input pressed interact with object in front of player
+        if (InteractInputPressed())
         {
-            if (Input.GetKey(KeyCode.E))
-            {
-                m_HeldObject.transform.Rotate(new Vector3(0, 1, 0) * m_RotationSpeed * Time.deltaTime, Space.World);
-            }
-            if (Input.GetKey(KeyCode.Q))
-            {
-                m_HeldObject.transform.Rotate(new Vector3(0, -1, 0) * m_RotationSpeed * Time.deltaTime, Space.World);
-            }
-            if (Input.GetAxis("Mouse ScrollWheel") > 0f)
-            {
-                m_HeldObject.transform.Rotate(new Vector3(10, 0, 0) * m_RotationSpeed * Time.deltaTime, Space.World);
-            }
-            if (Input.GetAxis("Mouse ScrollWheel") < 0f)
-            {
-                m_HeldObject.transform.Rotate(new Vector3(-10, 0, 0) * m_RotationSpeed * Time.deltaTime, Space.World);
-            }
+            Interact();
+        }
+
+        // If rotation input and an object is held rotate the object
+        if (RotateInputPressed() && m_HeldObject)
+        {
+            RotateHeldObject();
         }
     }
 
@@ -79,27 +56,76 @@ public class PlayerPickupController : NetworkBehaviour
 
     #region Private Methods
 
-    void OnRayHit(RaycastHit hit)
+    private bool PickupInputPressed()
     {
-        IInteractable interactable;
+        return Input.GetMouseButtonDown(0);
+    }
 
-        if ((interactable = hit.collider.GetComponent<IInteractable>()) != null && m_HeldObject == null)
+    private bool DropInputPressed()
+    {
+        return Input.GetMouseButtonUp(0);
+    }
+
+    private bool InteractInputPressed()
+    {
+        return PickupInputPressed() || DropInputPressed();
+    }
+
+    private void Interact()
+    {
+        if (PickupInputPressed())
         {
-            interactable.OnInteract();
-            Pickup(hit.collider.GetComponent<Transform>());
+            HandleRaycast();
+        }
+        else if (m_HeldObject)
+        {
+            Drop(m_HeldObject);
+            m_HeldObject = null;
         }
     }
 
-    void Pickup(Transform interactable)
+    private void HandleRaycast()
     {
-        interactable.SetParent(m_PlayerHand.transform);
-        m_HeldObject = interactable;
+        RaycastHit hit;
+        if (Physics.Raycast(PlayerCamera.transform.position, PlayerCamera.transform.forward, out hit, Mathf.Infinity, m_InteractionMask))
+        {
+            NetworkIdentity objNetId = hit.collider.GetComponent<NetworkIdentity>();
+
+            if (objNetId.hasAuthority)
+            {
+                m_HeldObject = objNetId;
+                Pickup(m_HeldObject);
+            }
+        }
     }
 
-     void Drop()
+    private void Pickup(NetworkIdentity obj)
     {
-        m_HeldObject.SetParent(null);
-        m_HeldObject = null;
+        obj.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.FreezeAll;
+        obj.transform.SetParent(PlayerHand.transform);
+    }
+
+    private void Drop(NetworkIdentity obj)
+    {
+        obj.GetComponent<Rigidbody>().constraints = RigidbodyConstraints.None;
+        obj.transform.SetParent(null);
+    }
+
+    private bool RotateInputPressed()
+    {
+        return Input.GetKey(KeyCode.Q) || Input.GetKey(KeyCode.E)
+            || Input.GetKey(KeyCode.C) || Input.GetKey(KeyCode.Z);
+    }
+
+    private void RotateHeldObject()
+    {
+        float zAxis = (Convert.ToSingle(Input.GetKey(KeyCode.Q)) - Convert.ToSingle(Input.GetKey(KeyCode.E)));
+        float xAxis = (Convert.ToSingle(Input.GetKey(KeyCode.C)) - Convert.ToSingle(Input.GetKey(KeyCode.Z)));
+
+        Quaternion rotationZ = Quaternion.AngleAxis(RotationSpeed * zAxis * Time.deltaTime, PlayerCamera.transform.forward);
+        Quaternion rotationX = Quaternion.AngleAxis(RotationSpeed * xAxis * Time.deltaTime, PlayerCamera.transform.right);
+
+        m_HeldObject.transform.rotation = rotationZ * rotationX * m_HeldObject.transform.rotation;
     }
 
     #endregion
