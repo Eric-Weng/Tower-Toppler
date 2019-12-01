@@ -1,58 +1,79 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Networking;
+using UnityEngine.InputSystem;
 
 #pragma warning disable 0618
-public class PlayerMovementController : NetworkBehaviour
+public class PlayerMovementController : MonoBehaviour
 {
-
     #region Fields
-    
-    public float speed;
 
-    private Rigidbody m_RigidBody;
+    public float speed = 6.0f;
+    public float jumpSpeed = 8.0f;
+    public float gravity = 20.0f;
+
+    private CharacterController characterController = null;
+    private Controls controls = null;
+    private Vector3 moveDirection = Vector3.zero;
 
     #endregion
-
 
     #region Unity Methods
 
-    private void Start()
+    void Awake()
     {
-        m_RigidBody = gameObject.GetComponent<Rigidbody>();
+        controls = new Controls();
+
+        // Register input event for jumping
+        controls.Player.Jump.performed += ctx => Jump();
     }
 
-    private void FixedUpdate()
+    void OnEnable()
     {
-        if (!isLocalPlayer)
+        controls.Player.Enable();
+    }
+
+    void OnDisable()
+    {
+        controls.Player.Disable();
+    }
+
+    void Start()
+    {
+        characterController = GetComponent<CharacterController>();
+    }
+
+    void Update()
+    {
+        // Save current vertical speed for transforming
+        float vertSpeed = moveDirection.y;
+
+        // Apply lateral movement
+        Vector2 input = controls.Player.Movement.ReadValue<Vector2>();
+        moveDirection = speed * transform.TransformDirection(input.x, 0.0f, input.y);
+
+        // Rstore vertical speed
+        moveDirection.y = vertSpeed;
+
+        // Apply gravity in air
+        if (!characterController.isGrounded)
         {
-            return;
+            moveDirection.y -= (gravity * Time.deltaTime);
         }
 
-        Move();
+        // Move player
+        characterController.Move(moveDirection * Time.deltaTime);
     }
 
     #endregion
 
+    #region Public Methods
 
-    #region Private Methods
-
-    private void Move()
+    public void Jump()
     {
-        float xAxis = Input.GetAxisRaw("Horizontal");
-        float zAxis = Input.GetAxisRaw("Vertical");
-
-        float yAxis = 0f;
-        if (Input.GetKey(KeyCode.Space) ^ Input.GetKey(KeyCode.LeftShift))
+        // perform jump when on ground
+        if (characterController.isGrounded)
         {
-            yAxis = Input.GetKey(KeyCode.Space) ? 1f : -1f;
+            moveDirection.y = jumpSpeed;
         }
-
-        float modifier = Input.GetKey(KeyCode.LeftControl) ? 0.5f : 1f;
-        
-        Vector3 force = transform.TransformDirection(new Vector3(xAxis, yAxis, zAxis) * speed * modifier);
-        m_RigidBody.AddForce(force);
     }
 
     #endregion

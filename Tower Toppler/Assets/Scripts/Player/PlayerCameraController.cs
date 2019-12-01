@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 
 #pragma warning disable 0618
-public class PlayerCameraController : NetworkBehaviour
+public class PlayerCameraController : MonoBehaviour
 {
 
     #region Fields
@@ -14,45 +14,63 @@ public class PlayerCameraController : NetworkBehaviour
     public GameObject playerBody;
     public GameObject playerCamera;
 
-    private Vector2 smoothedVelocity;
-    private Vector2 currentLookingPos;
+    private float scaleFactor = 0.1f;
+    private bool enable_rotation = true;
+    private Controls controls = null;
+    private Vector2 smoothedVelocity = Vector2.zero;
+    private Vector2 currentLookingPos = Vector2.zero;
 
     #endregion
 
 
     #region Unity Methods
 
-    private void Start()
+    void Awake()
     {
-        if (!isLocalPlayer)
-        {
-            playerCamera.GetComponent<Camera>().enabled = false;
-            playerCamera.GetComponent<AudioListener>().enabled = false;
-            return;
-        }
+        controls = new Controls();
+    }
 
+    void OnEnable()
+    {
+        controls.Player.Enable();
+    }
+
+    void OnDisable()
+    {
+        controls.Player.Disable();
+    }
+
+    void Start()
+    {
         Cursor.lockState = CursorLockMode.Locked; //Lock cursor in the middle of screen
         Cursor.visible = false; //Make cursor invisible
     }
 
-    private void Update()
+    void Update()
     {
-        if (!isLocalPlayer)
+        if (enable_rotation)
         {
-            return;
+            RotateCamera(); //Rotate camera every frame
         }
-
-        RotateCamera(); //Rotate camera every frame
     }
 
     #endregion
 
+    #region Public Methods
+
+    public void ToggleCameraRotation()
+    {
+        enable_rotation = !enable_rotation;
+    }
+
+    #endregion
 
     #region Private Methods
 
     private void RotateCamera()
     {
-        Vector2 inputValues = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y")); //Makes Vector2 that gets mouse input
+        Vector2 inputValues = scaleFactor * controls.Player.Camera.ReadValue<Vector2>(); //Makes Vector2 that gets mouse input
+        //Vector2 inputValues = new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y")); //Makes Vector2 that gets mouse input
 
         inputValues = Vector2.Scale(inputValues, new Vector2(lookSensitivity * smoothing, lookSensitivity * smoothing));
 

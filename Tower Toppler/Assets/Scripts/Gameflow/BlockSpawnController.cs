@@ -6,10 +6,33 @@ public class BlockSpawnController : MonoBehaviour
 {
 
     #region Members
+    
+    public List<GameObject> m_Blocks;
 
-    #pragma warning disable 0649
-    [SerializeField] private List<GameObject> m_Blocks;
-    #pragma warning restore 0649
+    private bool isEmpty = true;
+
+    #endregion
+
+    #region Unity Methods
+
+    void FixedUpdate()
+    {
+        isEmpty = true;
+    }
+
+    void OnTriggerStay(Collider other)
+    {
+        isEmpty = false;
+    }
+
+    void Update()
+    {
+        if (isEmpty)
+        {
+            isEmpty = false;
+            SpawnRandomBlock();
+        }
+    }
 
     #endregion
 
@@ -17,21 +40,15 @@ public class BlockSpawnController : MonoBehaviour
 
     public GameObject SpawnRandomBlock()
     {
-        return SpawnRandomAtPosition(transform);
-    }
-
-    public GameObject SpawnRandomAtPosition(Transform pos)
-    {
         if (m_Blocks.Count == 0)
         {
             return null;
         }
 
-        GameObject newBlock = Instantiate(m_Blocks[UnityEngine.Random.Range(0, m_Blocks.Count)], pos);
+        GameObject newBlock = Instantiate(m_Blocks[UnityEngine.Random.Range(0, m_Blocks.Count)], transform);
         newBlock.transform.SetParent(null);
 
         return newBlock;
-
     }
 
     #endregion

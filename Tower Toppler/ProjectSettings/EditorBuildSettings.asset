@@ -8,7 +8,18 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/MainMenu.unity
     guid: 9a774f13dbf7f264f8a6dfb01db66df9
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Development_Scene.unity
     guid: ac6b9db8dfc5ba94c921301f28f2402c
-  m_configObjects: {}
+  - enabled: 0
+    path: Assets/Scenes/RandomTowerBuild.unity
+    guid: 58c174e8375f27147883e9ac42dc3a72
+  - enabled: 1
+    path: Assets/Scenes/TowerEscape.unity
+    guid: e64a3072f245a0e40a5c282e7453288f
+  - enabled: 1
+    path: Assets/Scenes/Credits.unity
+    guid: 49f9fd834ae466f4db720ef634eb090e
+  m_configObjects:
+    com.unity.input.settings: {fileID: 11400000, guid: d316db2db4139f64ebd66c1a2d9380bd,
+      type: 2}

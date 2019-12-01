@@ -5,15 +5,15 @@ using UnityEngine;
 public class TowerFallHandler : MonoBehaviour
 {
 
-    #region Members
+    #region Declarations
 
-    private event EventHandler OnTowerFall;
+    public delegate void EventHandler();
 
     #endregion
 
-    #region Delegates
+    #region Members
 
-    public delegate void EventHandler();
+    private event EventHandler OnTowerFall;
 
     #endregion
 
